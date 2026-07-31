@@ -39,10 +39,14 @@ function isBareHost(url: string): boolean {
 
 export function detectFormatFromEndpoint(endpoint: string): ApiFormat | null {
     try {
-        const { hostname } = new URL(endpoint);
+        const { hostname, host } = new URL(endpoint);
         if (hostname.includes('api.anthropic.com')) return 'claude';
         if (hostname.includes('generativelanguage.googleapis.com')) return 'gemini';
-        if (/^(localhost|127\.0\.0\.1):11434$/.test(hostname)) return 'ollama';
+        // Ollama's default port identifies it regardless of host: a LAN box
+        // (e.g. 192.168.x.y:11434) is the normal deployment once the model no
+        // longer fits on the machine running the UI. Matching only localhost
+        // silently sent those to the OpenAI path, which Ollama does not serve.
+        if (/^(localhost|127\.0\.0\.1|\[::1\]|(?:\d{1,3}\.){3}\d{1,3}|[a-z0-9-]+(?:\.[a-z0-9-]+)*):11434$/i.test(host)) return 'ollama';
     } catch { /* invalid URL */ }
     return null;
 }
@@ -343,6 +347,14 @@ export function buildChatBody(
         if (s.dry_multiplier !== undefined) body.dry_multiplier = s.dry_multiplier;
         if (s.dry_base !== undefined) body.dry_base = s.dry_base;
         if (s.dry_allowed_length !== undefined) body.dry_allowed_length = s.dry_allowed_length;
+    }
+
+    // Ollama defaults `think` to ON for thinking-capable models (gemma4, qwen3,
+    // deepseek-r1...). Omitting the field is therefore not "off": hidden
+    // reasoning eats num_predict and the reply comes back empty with
+    // done_reason=length. Send the negative explicitly.
+    if (isOllama && (!effort || effort === 'off')) {
+        body.think = false;
     }
 
     if (effort && effort !== 'off') {
