@@ -1,37 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application, Graphics, Container, Assets, Sprite, Texture, Rectangle, Text } from 'pixi.js';
 import * as filters from 'pixi-filters';
+import { ASSET_BASE } from '../../lib/apiBase';
 
 // Tile Coordinates for PicoVillage (16x16 units)
 const PICO_TILES = {
-    OUTDOOR: '/assets/tilesets/picovillage/OutDoorTiles.png',
-    WATER: '/assets/tilesets/picovillage/WaterTileSet.png',
-    ROCKS: '/assets/tilesets/picovillage/LoftedRocks.png'
+    OUTDOOR: `${ASSET_BASE}/assets/tilesets/picovillage/OutDoorTiles.png`,
+    WATER: `${ASSET_BASE}/assets/tilesets/picovillage/WaterTileSet.png`,
+    ROCKS: `${ASSET_BASE}/assets/tilesets/picovillage/LoftedRocks.png`
 };
 
 const FANTASY_TILES = {
-    GROUND: '/assets/tilesets/The Fan-tasy Tileset (Free)/Art/Ground Tileset/Tileset_Ground.png',
-    WATER: '/assets/tilesets/The Fan-tasy Tileset (Free)/Art/Water and Sand/Tileset_Water.png'
+    GROUND: `${ASSET_BASE}/assets/tilesets/The Fan-tasy Tileset (Free)/Art/Ground Tileset/Tileset_Ground.png`,
+    WATER: `${ASSET_BASE}/assets/tilesets/The Fan-tasy Tileset (Free)/Art/Water and Sand/Tileset_Water.png`
 };
 
 const SNOW_TILES = {
-    BASE: '/assets/Snow Asset Pack/Terrain/Snow/Snow_1.png',
+    BASE: `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_1.png`,
     VARIANTS: [
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_0.png',
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_1.png',
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_2.png',
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_3.png',
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_4.png',
-        '/assets/Snow Asset Pack/Terrain/Snow/Snow_5.png',
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_0.png`,
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_1.png`,
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_2.png`,
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_3.png`,
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_4.png`,
+        `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Snow_5.png`,
     ],
-    CLIFF: '/assets/Snow Asset Pack/Terrain/Snow/Cliff_Top.png',
-    TREE: '/assets/Snow Asset Pack/Trees/Tree_1.png'
+    CLIFF: `${ASSET_BASE}/assets/Snow Asset Pack/Terrain/Snow/Cliff_Top.png`,
+    TREE: `${ASSET_BASE}/assets/Snow Asset Pack/Trees/Tree_1.png`
 };
 
 const DESERT_TILES = {
-    BASE: '/assets/tilesets/Desert/sand.png',
-    CACTUS: '/assets/tilesets/Desert/decor_cactus1.png',
-    PALM: '/assets/tilesets/Desert/tree_palm1.png'
+    BASE: `${ASSET_BASE}/assets/tilesets/Desert/sand.png`,
+    CACTUS: `${ASSET_BASE}/assets/tilesets/Desert/decor_cactus1.png`,
+    PALM: `${ASSET_BASE}/assets/tilesets/Desert/tree_palm1.png`
 };
 
 // Source Rectangles (x, y, w, h in 16px units)
