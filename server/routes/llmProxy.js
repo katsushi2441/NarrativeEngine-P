@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Readable } from 'stream';
 import { wrapAsync } from '../lib/asyncHandler.js';
+import { guardOutbound } from '../lib/tenant.js';
 
 export function createLLMProxyRouter() {
     const router = Router();
@@ -14,6 +15,9 @@ export function createLLMProxyRouter() {
             res.status(400).json({ error: 'Missing proxy target' });
             return;
         }
+        // Tenants may only reach allowlisted endpoints — the target is
+        // client-controlled, so this relay is otherwise an open SSRF proxy.
+        guardOutbound(target);
 
         const controller = new AbortController();
         // Browser aborted the turn → tear down the upstream request too.

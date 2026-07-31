@@ -7,6 +7,7 @@ import { storeLoreEmbedding, deleteCampaignEmbeddings } from '../lib/vectorStore
 import { startJob, tickJob, endJob } from '../lib/embedJobs.js';
 import { wrapAsync } from '../lib/asyncHandler.js';
 import { validateEnemyCompendium, validateEnemyInstances, validateEnemyEncounters, validateEnemyResolutions, validateEnemyCombatConfig } from '../lib/enemySchema.js';
+import { getTenant } from '../lib/tenant.js';
 
 export function createCampaignsRouter() {
     const router = Router();
@@ -17,7 +18,11 @@ export function createCampaignsRouter() {
 
     router.get('/api/campaigns', wrapAsync((_req, res) => {
         ensureDirs();
+        // Tenants see only their own namespace; single-user (legacy/owner) mode
+        // sees everything, which doubles as an admin view of all tenants.
+        const tenant = getTenant();
         const files = fs.readdirSync(CAMPAIGNS_DIR).filter(f =>
+            (!tenant || f.startsWith(tenant.prefix)) &&
             f.endsWith('.json') &&
             !f.includes('.state') &&
             !f.includes('.lore') &&

@@ -2,6 +2,7 @@
  * LLM proxy functions extracted from server.js.
  * Uses global fetch — no other external dependencies.
  */
+import { guardOutbound } from '../lib/tenant.js';
 
 /**
  * Normalize an LLM endpoint URL.
@@ -43,6 +44,8 @@ export function clampImportance(val) {
  * Returns the raw matched JSON string from the response, or null on failure.
  */
 export async function callLLMWithRetry(prompt, config, { maxAttempts = 1, timeoutMs = 6000, jsonPattern = /\{[\s\S]*\}/ } = {}) {
+    // The endpoint is client-supplied — tenants may only reach allowlisted hosts.
+    guardOutbound(config.endpoint);
     let attempts = 0;
     while (attempts < maxAttempts) {
         let timer;

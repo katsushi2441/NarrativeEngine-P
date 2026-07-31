@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { CAMPAIGNS_DIR, validateCampaignId } from '../lib/fileStore.js';
 import { generateComfyUIImage } from './comfyUiProvider.js';
+import { guardOutbound } from '../lib/tenant.js';
 
 export function getCampaignSceneImagesDir(campaignId) {
     validateCampaignId(campaignId);
@@ -66,6 +67,9 @@ export async function generateSceneImage({ campaignId, promptPackage, config }) 
     const negative_prompt = promptPackage.negativePrompt
         ? `${promptPackage.negativePrompt}, ${defaultNegative}`
         : defaultNegative;
+
+    // The endpoint is client-configured — tenants may only reach allowlisted hosts.
+    guardOutbound(config.endpoint);
 
     // ── Native ComfyUI branch ────────────────────────────────────────────────
     // Routes to a local ComfyUI server (built-in or custom API workflow). The
@@ -156,6 +160,7 @@ export async function generateSceneImage({ campaignId, promptPackage, config }) 
     let imageBuffer = null;
 
     if (imageUrlOrB64.startsWith('http://') || imageUrlOrB64.startsWith('https://')) {
+        guardOutbound(imageUrlOrB64);
         const imgRes = await fetch(imageUrlOrB64);
         if (!imgRes.ok) throw new Error(`Failed to download generated image from ${imageUrlOrB64}`);
         const ab = await imgRes.arrayBuffer();

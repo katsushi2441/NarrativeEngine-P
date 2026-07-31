@@ -28,6 +28,7 @@ import { initDb } from './server/lib/vectorStore.js';
 import { warmup as warmupEmbedder } from './server/lib/embedder.js';
 import { warmupTts } from './server/lib/tts.js';
 import { serverError } from './server/lib/serverError.js';
+import { tenantMiddleware } from './server/lib/tenant.js';
 
 const app = express();
 // Port and bind address are configurable so the app can run as a long-lived
@@ -74,6 +75,10 @@ app.use(cors({
     credentials: false,
 }));
 app.use(express.json({ limit: '500mb' }));
+// Multi-tenant boundary (kgm fork): authenticates X-Kgm-User/X-Kgm-Token and
+// namespaces campaign ids per user. Must run after body parsing (it rewrites
+// ids inside bodies) and before static/asset/API handlers.
+app.use(tenantMiddleware);
 // Serve the built SPA from this same port when dist/ exists, so a deployed
 // instance needs one port and no separate web server. In dev, Vite serves the
 // frontend instead and this block is simply inert.

@@ -2,9 +2,27 @@ import { Router } from 'express';
 import { KeyVault } from '../vault.js';
 import { wrapAsync } from '../lib/asyncHandler.js';
 import { AppError, serverError } from '../lib/serverError.js';
+import { getTenant } from '../lib/tenant.js';
 
 export function createVaultRouter(vault) {
     const router = Router();
+
+    // The vault holds the OWNER's provider API keys. On a shared server,
+    // non-admin tenants must never read or mutate it — they get the local
+    // (keyless) LLM via the outbound allowlist instead. Stub the two endpoints
+    // the frontend polls so the UI never blocks on vault state.
+    router.use((req, res, next) => {
+        if (!req.path.startsWith('/api/vault')) return next();
+        const tenant = getTenant();
+        if (!tenant || tenant.isAdmin) return next();
+        if (req.method === 'GET' && req.path === '/api/vault/status') {
+            return res.json({ exists: true, unlocked: true, hasRemember: false });
+        }
+        if (req.method === 'GET' && req.path === '/api/vault/keys') {
+            return res.json({ presets: [] });
+        }
+        return res.status(403).json({ error: 'この共有サーバーではAPIキー保管庫は管理者専用です' });
+    });
 
     router.get('/api/vault/status', wrapAsync((_req, res) => {
         res.json({

@@ -8,6 +8,7 @@ import {
 import { embedText, buildArchiveText, buildLoreText } from '../lib/embedder.js';
 import { storeArchiveEmbedding, storeLoreEmbedding } from '../lib/vectorStore.js';
 import { wrapAsync } from '../lib/asyncHandler.js';
+import { getTenant } from '../lib/tenant.js';
 import path from 'path';
 import {
     validateEnemyCompendium,
@@ -152,7 +153,9 @@ export function createTransferRouter() {
         );
         const originalId = bundle.campaign?.id;
         validateCampaignId(originalId);
-        const newId = existingIds.has(originalId) ? uid() : originalId;
+        // On collision the fresh id must stay inside the tenant's namespace —
+        // a bare uid() would land the import in the shared/legacy namespace.
+        const newId = existingIds.has(originalId) ? (getTenant()?.prefix ?? '') + uid() : originalId;
         validateCampaignId(newId);
 
         const campaign = { ...bundle.campaign, id: newId };

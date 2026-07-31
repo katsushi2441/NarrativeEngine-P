@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { PUBLIC_ASSETS_DIR } from '../lib/fileStore.js';
 import { wrapAsync } from '../lib/asyncHandler.js';
 import { serverError } from '../lib/serverError.js';
+import { guardOutbound } from '../lib/tenant.js';
 
 export function createAssetsRouter() {
     const router = Router();
@@ -43,6 +44,10 @@ export function createAssetsRouter() {
     router.post('/api/assets/download', wrapAsync(async (req, res) => {
         const { url, filename: rawFilename } = req.body;
         if (!url || !rawFilename) return res.status(400).json({ error: 'Missing url or filename' });
+        // Server-side fetch of a client-supplied URL — tenants are restricted to
+        // the allowlist (in practice this disables it for them; they can still
+        // upload portraits as data URLs).
+        guardOutbound(url);
 
         const filename = path.basename(rawFilename);
         if (!filename || filename.startsWith('.')) {

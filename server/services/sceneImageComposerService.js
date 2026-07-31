@@ -1,3 +1,5 @@
+import { guardOutbound } from '../lib/tenant.js';
+
 const SYSTEM_PROMPT = `You are preparing an illustration brief for a roleplaying scene text-to-image generator.
 
 CRITICAL INSTRUCTIONS:
@@ -95,6 +97,8 @@ Campaign Visual Style: ${contextInput.campaignVisualStyle || 'Cinematic illustra
         headers['Authorization'] = `Bearer ${llmConfig.apiKey}`;
     }
 
+    // The endpoint is client-supplied — tenants may only reach allowlisted hosts.
+    guardOutbound(llmConfig.endpoint);
     let url = llmConfig.endpoint.replace(/\/+$/, '');
     if (!url.endsWith('/chat/completions')) {
         url = `${url}/chat/completions`;
