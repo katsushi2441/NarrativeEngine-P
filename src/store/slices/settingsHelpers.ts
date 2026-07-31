@@ -57,13 +57,28 @@ export const DEFAULT_WORLD_WHAT = [
 
 // ── Internal helpers ───────────────────────────────────────────────────
 
+// First-run provider. The upstream default (localhost + llama3) assumes Ollama
+// runs on the machine showing the UI and that llama3 is pulled; neither holds
+// for a LAN Ollama box, and a wrong model name fails only at the first turn,
+// after the user has already written a character. Both are therefore
+// overridable at build time so a deployment ships ready to play:
+//
+//   VITE_DEFAULT_LLM_ENDPOINT   e.g. http://192.168.0.3:11434
+//   VITE_DEFAULT_LLM_MODEL      e.g. gemma4:12b-it-qat
+//
+// apiFormat stays 'ollama' for an 11434 endpoint: detectFormatFromEndpoint
+// resolves it, but naming it here keeps the seeded provider self-describing.
+const envEndpoint = import.meta.env?.VITE_DEFAULT_LLM_ENDPOINT as string | undefined;
+const envModel = import.meta.env?.VITE_DEFAULT_LLM_MODEL as string | undefined;
+const seededEndpoint = envEndpoint?.trim() || 'http://localhost:11434';
+
 export const defaultProvider: LLMProvider = {
     id: uid(),
     label: 'Default',
-    endpoint: 'http://localhost:11434/v1',
+    endpoint: seededEndpoint,
     apiKey: '',
-    modelName: 'llama3',
-    apiFormat: 'openai',
+    modelName: envModel?.trim() || 'llama3',
+    apiFormat: /:11434(\/|$)/.test(seededEndpoint) ? 'ollama' : 'openai',
     streamingEnabled: true,
 };
 
@@ -87,6 +102,10 @@ export const defaultSettings: AppSettings = {
     // Seeded from the browser so a first-run Korean user gets Korean chrome
     // without hunting for the setting. Overridden by any stored value.
     locale: detectLocale(),
+    // Narration follows the detected UI language on first run: a Japanese
+    // browser almost certainly wants a Japanese GM. Independent afterwards —
+    // changing one never changes the other.
+    narrationLanguage: detectLocale() === 'ja' ? 'ja' : 'en',
     showReasoning: true,
     deepContextSearch: false,
     autoExtractDivergences: true,
