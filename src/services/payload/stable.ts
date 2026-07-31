@@ -30,6 +30,36 @@ export function isThinkingEnabled(settings: AppSettings): boolean {
 // so the framework works for any provider: DeepSeek emits it in `reasoning_content`,
 // Claude in `thinking` blocks, GPT-5 in `reasoning` tokens, Gemini in `thinking_config`
 // parts, and legacy non-thinking models reason silently before the narrative.
+
+// [KURAGE-JP] Narration language directive.
+//
+// Upstream assumes the model narrates in English, so nothing in the payload
+// states an output language. For a Japanese-first deployment that is not a
+// translation problem: the model must *write* in Japanese while every
+// machine-facing token stays verbatim, or the engine's own parsers break.
+//
+// What must never be translated: dice/tool markers ([DICE OUTCOMES], [LOCATION],
+// [ACTIVE NPC CONTEXT] and the other bracket labels), JSON keys, tool names,
+// stat and item identifiers. Those are contracts between the engine and the
+// model, not prose. Character names and place names follow the world file as
+// written by the author.
+//
+// Controlled by settings.narrationLanguage ('en' keeps upstream behaviour).
+const NARRATION_LANGUAGE_RULES: Record<string, string> = {
+    ja: `[NARRATION LANGUAGE]
+Write all narration, dialogue and descriptions in natural Japanese (日本語). Do not write in a translated-sounding style.
+Keep these verbatim in their original form, never translated and never re-spelled: bracket labels such as [DICE OUTCOMES], [LOCATION], [ACTIVE NPC CONTEXT]; JSON keys; tool names; stat, skill and item identifiers.
+Character names, place names and proper nouns follow the world file exactly as written there.
+Numbers, dice results and mechanical outcomes stay exactly as resolved by the engine.
+Out-of-character system messages you emit for the player are also written in Japanese.`,
+};
+
+export function narrationLanguageRule(settings: AppSettings): string | undefined {
+    const lang = (settings as { narrationLanguage?: string }).narrationLanguage;
+    if (!lang || lang === 'en') return undefined;
+    return NARRATION_LANGUAGE_RULES[lang];
+}
+
 const WRITER_COT = `[WRITER REASONING FRAMEWORK]
 Work through these steps in your internal reasoning before writing the narrative. Never show the steps in the narrative output. Always produce the full narrative response after your reasoning ends.
 Step 1 — Deconstruct: break the player's input into discrete intents. Judge each against the rules and MC boundaries. Impossible or implausible demands are narrated as attempts with consequences, not successes.
@@ -90,6 +120,11 @@ export function buildStable(opts: {
     if (context.canonStateActive && context.canonState) {
         stableParts.push(context.canonState);
     }
+    // [KURAGE-JP] Narration language comes before world/starter text so the
+    // model sees it as a standing instruction, not a late override.
+    const langRule = narrationLanguageRule(settings);
+    if (langRule) stableParts.push(langRule);
+
     if (context.headerIndexActive && context.headerIndex) stableParts.push(context.headerIndex);
     if (context.starterActive && context.starter) stableParts.push(context.starter);
     if (context.continuePromptActive && context.continuePrompt) stableParts.push(context.continuePrompt);

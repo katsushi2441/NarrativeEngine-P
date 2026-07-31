@@ -99,6 +99,10 @@ export type AppSettings = {
     debugMode?: boolean;
     theme?: 'light' | 'dark' | 'system';
     locale?: LocaleCode;             // UI chrome language. Defaults to the browser language on first run, then never auto-changes. Independent of narration language (Phase 3).
+    // [KURAGE-JP] Language the model narrates in. Independent of `locale`, which
+    // only changes the UI chrome: a player can read an English UI while the GM
+    // narrates in Japanese, or the reverse. 'en' keeps upstream behaviour.
+    narrationLanguage?: 'en' | 'ja';
     showReasoning?: boolean;
     deepContextSearch?: boolean;
     autoExtractDivergences?: boolean;

@@ -10,6 +10,7 @@
  * 3 (English fallback), 6 (interpolation), 7 (plurals).
  */
 import { en, type TranslationKey } from './locales/en';
+import { ja } from './locales/ja';
 import { ko } from './locales/ko';
 import { ru } from './locales/ru';
 import { pl } from './locales/pl';
@@ -28,6 +29,7 @@ export { en };
  */
 export const LOCALES: Record<LocaleCode, LocalePack> = {
     en: { code: 'en', label: 'English', strings: en },
+    ja,
     ko,
     ru,
     pl,
@@ -36,7 +38,7 @@ export const LOCALES: Record<LocaleCode, LocalePack> = {
 };
 
 /** Order shown in the language dropdown. `pseudo` is last — it is a test tool. */
-export const LOCALE_ORDER: LocaleCode[] = ['en', 'ko', 'ru', 'pl', 'id', 'pseudo'];
+export const LOCALE_ORDER: LocaleCode[] = ['en', 'ja', 'ko', 'ru', 'pl', 'id', 'pseudo'];
 
 export const DEFAULT_LOCALE: LocaleCode = 'en';
 
