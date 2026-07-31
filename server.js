@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import express from 'express';
 import cors from 'cors';
 import { KeyVault } from './server/vault.js';
@@ -26,7 +30,13 @@ import { warmupTts } from './server/lib/tts.js';
 import { serverError } from './server/lib/serverError.js';
 
 const app = express();
-const PORT = 3001;
+// Port and bind address are configurable so the app can run as a long-lived
+// service rather than only as a dev-machine localhost process. Defaults keep
+// upstream behaviour (3001, loopback only).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const PORT = Number(process.env.KGM_PORT || process.env.PORT || 3001);
+const HOST = process.env.KGM_HOST || '127.0.0.1';
 
 // Initialize vault
 const vault = new KeyVault(DATA_DIR);
@@ -64,6 +74,14 @@ app.use(cors({
     credentials: false,
 }));
 app.use(express.json({ limit: '500mb' }));
+// Serve the built SPA from this same port when dist/ exists, so a deployed
+// instance needs one port and no separate web server. In dev, Vite serves the
+// frontend instead and this block is simply inert.
+const DIST_DIR = path.join(__dirname, 'dist');
+if (fs.existsSync(DIST_DIR)) {
+    app.use(express.static(DIST_DIR));
+}
+
 app.use('/assets/portraits', express.static(PUBLIC_ASSETS_DIR));
 app.use('/assets/campaigns', express.static(CAMPAIGNS_DIR));
 
@@ -102,7 +120,15 @@ app.use((err, _req, res, _next) => {
 });
 
 // ─── Start ───
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(`[GM-Cockpit API] ✓ Running on http://localhost:${PORT}`);
+// SPA fallback: any non-API path returns index.html so deep links work on a
+// reload. Registered last so it never shadows an API route.
+if (fs.existsSync(DIST_DIR)) {
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+        res.sendFile(path.join(DIST_DIR, 'index.html'));
+    });
+}
+
+app.listen(PORT, HOST, () => {
+    console.log(`[GM-Cockpit API] ✓ Running on http://${HOST}:${PORT}`);
     console.log(`[GM-Cockpit API]   Data dir: ${DATA_DIR}`);
 });
