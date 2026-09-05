@@ -8,6 +8,7 @@ import { startJob, tickJob, endJob } from '../lib/embedJobs.js';
 import { wrapAsync } from '../lib/asyncHandler.js';
 import { validateEnemyCompendium, validateEnemyInstances, validateEnemyEncounters, validateEnemyResolutions, validateEnemyCombatConfig } from '../lib/enemySchema.js';
 import { getTenant } from '../lib/tenant.js';
+import { seedStarterCampaign } from '../lib/starterCampaign.js';
 
 export function createCampaignsRouter() {
     const router = Router();
@@ -21,6 +22,12 @@ export function createCampaignsRouter() {
         // Tenants see only their own namespace; single-user (legacy/owner) mode
         // sees everything, which doubles as an admin view of all tenants.
         const tenant = getTenant();
+
+        // Every namespace gets the ready-to-play starter adventure (seeded once,
+        // on first list): a new player clicks a card and plays instead of
+        // filling in campaign-creation forms.
+        seedStarterCampaign(tenant?.prefix ?? '');
+
         const files = fs.readdirSync(CAMPAIGNS_DIR).filter(f =>
             (!tenant || f.startsWith(tenant.prefix)) &&
             f.endsWith('.json') &&
